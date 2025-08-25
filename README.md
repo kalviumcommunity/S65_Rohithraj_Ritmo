@@ -56,6 +56,18 @@ User Prompt: Requests a specific playlist ("upbeat pop for a road trip") without
 
 The zero-shot approach allows Ritmo to handle diverse user inputs (e.g., any mood or genre) flexibly, leveraging the LLM’s generalization capabilities and the RAG pipeline’s metadata retrieval for accuracy.
 
+## One-Shot Prompting Explanation
+
+What is One-Shot Prompting?
+One-shot prompting is a technique where the AI is provided with a single example to guide its response, helping it understand the desired output format and style without extensive training data.
+
+How It’s Utilized
+
+System Prompt: Defines Ritmo’s role and tasks it with generating a JSON playlist using metadata, specifying the structure and parameters (temperature=0.8, etc.). It includes a single example for "upbeat pop for a road trip" to demonstrate the expected JSON format, song count (5), and description style, enabling one-shot learning.
+
+User Prompt: Requests a "relaxing acoustic for a cozy evening" playlist, instructing the model to follow the example’s structure and style, ensuring consistency in output.
+This approach leverages the example to anchor the model’s response while allowing flexibility for the new query, using the RAG pipeline for relevant song selection.
+
 ## Contributing
 - Fork the repository.
 - Create feature branches (e.g., `feature/zero-shot`, `feature/embeddings`).
