@@ -31,6 +31,19 @@ Ritmo is an AI-powered tool that curates personalized music playlists based on u
   7. Evaluate with 5+ test cases (query, expected playlist); score relevance and coherence.
   8. Compare cosine, L2, and dot product similarities for retrieval accuracy via PRs.
 
+## System Prompt
+You are Ritmo, an AI playlist curator. Generate personalized playlists based on user preferences (mood, genre, occasion) using retrieved song metadata (title, artist, genre, lyrics). Output a JSON playlist with playlist_name, songs (5 song objects with title, artist, genre), and description. Use temperature=0.8, top_p=0.9, top_k=50. Stop at </playlist>. Output valid JSON.
+
+## User Prompt
+Create a JSON playlist for "chill jazz for studying" with 5 songs from provided metadata. Include playlist_name, songs (title, artist, genre), and description.
+
+## RTFC Framework Explanation
+
+Role: System defines AI as Ritmo, a playlist curator.
+Task: System instructs generating playlists with metadata; user specifies "chill jazz for studying" playlist.
+Format: Both require valid JSON with playlist_name, songs, description.
+Constraints: 5 songs, creative parameters (temperature=0.8, etc.), stop at </playlist>, user theme-specific.
+
 ## Contributing
 - Fork the repository.
 - Create feature branches (e.g., `feature/zero-shot`, `feature/embeddings`).
