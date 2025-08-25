@@ -44,6 +44,18 @@ Task: System instructs generating playlists with metadata; user specifies "chill
 Format: Both require valid JSON with playlist_name, songs, description.
 Constraints: 5 songs, creative parameters (temperature=0.8, etc.), stop at </playlist>, user theme-specific.
 
+## Zero-Shot Prompting Explanation
+
+What is Zero-Shot Prompting?Zero-shot prompting is a technique where the AI generates a response based solely on instructions without being provided prior examples or training data for the specific task. The model relies on its pre-trained knowledge and the clarity of the prompt to produce accurate outputs.
+
+How Zero-Shot Prompting is Utilized
+
+System Prompt: Defines Ritmo’s role and task clearly, instructing it to generate a playlist using metadata without providing example outputs. It specifies the JSON structure, song count (5), and LLM parameters (temperature=0.8, etc.) to guide the model in a zero-shot context.
+
+User Prompt: Requests a specific playlist ("upbeat pop for a road trip") without example playlists, relying on the model’s ability to interpret the theme and metadata. The prompt’s clarity ensures the model can generate a relevant playlist from scratch.
+
+The zero-shot approach allows Ritmo to handle diverse user inputs (e.g., any mood or genre) flexibly, leveraging the LLM’s generalization capabilities and the RAG pipeline’s metadata retrieval for accuracy.
+
 ## Contributing
 - Fork the repository.
 - Create feature branches (e.g., `feature/zero-shot`, `feature/embeddings`).
