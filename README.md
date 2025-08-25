@@ -68,6 +68,65 @@ System Prompt: Defines Ritmo’s role and tasks it with generating a JSON playli
 User Prompt: Requests a "relaxing acoustic for a cozy evening" playlist, instructing the model to follow the example’s structure and style, ensuring consistency in output.
 This approach leverages the example to anchor the model’s response while allowing flexibility for the new query, using the RAG pipeline for relevant song selection.
 
+## Multi-Shot
+
+System Prompt
+
+You are Ritmo, an AI music playlist curator. Create personalized playlists based on user preferences (e.g., mood, genre, occasion) using song metadata (title, artist, genre, lyrics) from a vector database. Output a JSON playlist with playlist_name, songs (5 song objects with title, artist, genre), and a description of the playlist’s vibe. Use multi-shot prompting, following the provided examples to guide the output structure and style. Ensure variety and query alignment. Set temperature=0.8, top_p=0.9, top_k=50. Stop at </playlist>. Output valid JSON.
+
+Examples:
+
+For query "upbeat pop for a road trip":
+
+{
+  "playlist_name": "Road Trip Jams",
+  "songs": [
+    {"title": "Sweet but Psycho", "artist": "Ava Max", "genre": "Pop"},
+    {"title": "Uptown Funk", "artist": "Mark Ronson ft. Bruno Mars", "genre": "Pop"},
+    {"title": "Shut Up and Dance", "artist": "Walk the Moon", "genre": "Pop"},
+    {"title": "Can't Stop the Feeling!", "artist": "Justin Timberlake", "genre": "Pop"},
+    {"title": "Good Time", "artist": "Owl City & Carly Rae Jepsen", "genre": "Pop"}
+  ],
+  "description": "An energetic pop playlist to keep you singing along on your road trip adventure."
+}
+</playlist>
+
+
+
+
+For query "chill jazz for studying":
+
+{
+  "playlist_name": "Study Jazz Vibes",
+  "songs": [
+    {"title": "Blue in Green", "artist": "Miles Davis", "genre": "Jazz"},
+    {"title": "My Favorite Things", "artist": "John Coltrane", "genre": "Jazz"},
+    {"title": "Round Midnight", "artist": "Thelonious Monk", "genre": "Jazz"},
+    {"title": "Take Five", "artist": "Dave Brubeck", "genre": "Jazz"},
+    {"title": "So What", "artist": "Miles Davis", "genre": "Jazz"}
+  ],
+  "description": "A soothing jazz playlist to enhance focus during your study sessions."
+}
+</playlist>
+
+User Prompt
+
+Generate a JSON playlist for "energetic hip-hop for a workout" with 5 songs from provided metadata. Include playlist_name, songs (title, artist, genre), and a description of the playlist’s vibe, following the structure and style of the provided examples.
+
+Multi-Shot Prompting Explanation
+
+What is Multi-Shot Prompting?
+Multi-shot prompting is a technique where the AI is provided with multiple examples to guide its response, helping it understand the desired output format, style, and context more robustly than with zero-shot or one-shot prompting.
+
+How It’s Utilized
+
+
+System Prompt: Defines Ritmo’s role as a playlist curator and instructs it to generate a JSON playlist using metadata, specifying the structure and parameters (temperature=0.8, etc.). It includes two examples—one for "upbeat pop for a road trip" and another for "chill jazz for studying"—to demonstrate the JSON format, song count (5), and description style, enabling the model to generalize across different music preferences.
+
+User Prompt: Requests a playlist for "energetic hip-hop for a workout," instructing the model to follow the examples’ structure and style, ensuring consistency. The multiple examples help the model adapt the tone and format to the new query while leveraging the RAG pipeline for relevant song selection.
+This approach enhances the model’s ability to produce coherent, contextually appropriate playlists by learning from diverse examples.
+
+
 ## Contributing
 - Fork the repository.
 - Create feature branches (e.g., `feature/zero-shot`, `feature/embeddings`).
