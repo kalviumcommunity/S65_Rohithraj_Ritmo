@@ -1,5 +1,3 @@
-<xaiArtifact artifact_id="9ac7c402-79d9-4f89-9744-f0b458e4d601" artifact_version_id="407f040f-3101-4599-a99f-f332a7a8f7f7" title="Ritmo_Prompts_Fixed.md" contentType="text/markdown">
-
 # Ritmo-Playlists
 
 ![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
@@ -161,10 +159,45 @@ Dynamic prompting adapts the AI’s response based on the user’s input complex
 - **User Prompt**: Requests a "mellow indie folk from the 2010s for a rainy day" playlist, a detailed query. The model adapts by selecting relevant songs and crafting a specific description, following the detailed example’s style, with the RAG pipeline ensuring metadata-driven selection.  
 This ensures flexible handling of varied query complexity.
 
+## Chain-of-Thought Prompting Explanation
+**System Prompt**  
+You are Ritmo, an AI music playlist curator. Create personalized playlists based on user preferences (e.g., mood, genre, occasion) using song metadata (title, artist, genre, lyrics) from a vector database. Use chain-of-thought prompting to reason through the process: (1) Analyze the user’s query to identify mood, genre, and occasion; (2) Select 5 songs from metadata that match the query’s criteria, ensuring variety; (3) Craft a playlist name and description reflecting the query’s vibe. Output a JSON playlist with `playlist_name`, `songs` (5 song objects with `title`, `artist`, `genre`), and a `description`. Set `temperature=0.8`, `top_p=0.9`, `top_k=50`. Stop at `</playlist>`. Output valid JSON.
+
+**Example**:
+For query "upbeat pop for a road trip":
+- Step 1: Query specifies "upbeat pop" (mood: energetic, genre: pop) and "road trip" (occasion: fun, driving).
+- Step 2: Select 5 pop songs with high energy from metadata, ensuring diverse artists.
+- Step 3: Name the playlist "Road Trip Jams" and describe it as energetic and sing-along-friendly.
+```json
+{
+  "playlist_name": "Road Trip Jams",
+  "songs": [
+    {"title": "Sweet but Psycho", "artist": "Ava Max", "genre": "Pop"},
+    {"title": "Uptown Funk", "artist": "Mark Ronson ft. Bruno Mars", "genre": "Pop"},
+    {"title": "Good Time", "artist": "Owl City & Carly Rae Jepsen", "genre": "Pop"},
+    {"title": "Shut Up and Dance", "artist": "Walk the Moon", "genre": "Pop"},
+    {"title": "Can't Stop the Feeling!", "artist": "Justin Timberlake", "genre": "Pop"}
+  ],
+  "description": "An energetic pop playlist to keep you singing along on your road trip adventure."
+}
+</playlist>
+```
+
+**User Prompt**  
+Generate a JSON playlist for "mellow indie folk from the 2010s for a rainy day" with 5 songs from provided metadata. Include `playlist_name`, `songs` (title, artist, genre), and a `description` reflecting the query’s vibe. Use chain-of-thought prompting to reason through: (1) Analyze the query’s mood, genre, and occasion; (2) Select 5 matching songs with variety; (3) Create a playlist name and description.
+
+**Chain-of-Thought Prompting Explanation**  
+**What is Chain-of-Thought Prompting?**  
+Chain-of-thought (CoT) prompting is a technique where the AI is instructed to break down a task into logical steps, reasoning through each to arrive at a solution. This improves transparency and accuracy for complex tasks.
+
+**How It’s Utilized**  
+- **System Prompt**: Instructs Ritmo to use CoT by explicitly outlining three steps: (1) Analyze the query for mood, genre, and occasion; (2) Select 5 diverse songs from metadata; (3) Craft a playlist name and description. Parameters (`temperature=0.8`, etc.) ensure creativity, and an example illustrates the reasoning process for "upbeat pop for a road trip."  
+- **User Prompt**: Requests a "mellow indie folk from the 2010s for a rainy day" playlist, instructing the model to follow the CoT steps to analyze the query, select songs, and create a name and description. The RAG pipeline ensures metadata-driven song selection.  
+This approach enhances the model’s reasoning, ensuring precise and contextually relevant playlists.
+
+
 ## Contributing
 - Fork the repository.
 - Create feature branches (e.g., `feature/zero-shot`, `feature/embeddings`).
 - Submit PRs with tests and documentation.
 - Validate features using the evaluation pipeline.
-
-</xaiArtifact>
