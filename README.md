@@ -1,5 +1,3 @@
-<xaiArtifact artifact_id="9ac7c402-79d9-4f89-9744-f0b458e4d601" artifact_version_id="27676810-f627-4e56-af18-28797868059f" title="Ritmo_Prompts_Updated.md" contentType="text/markdown">
-
 # Ritmo-Playlists
 
 ![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
@@ -203,5 +201,3 @@ This approach enhances the model’s reasoning, ensuring precise and contextuall
 - Create feature branches (e.g., `feature/zero-shot`, `feature/embeddings`).
 - Submit PRs with tests and documentation.
 - Validate features using the evaluation pipeline.
-
-</xaiArtifact>
