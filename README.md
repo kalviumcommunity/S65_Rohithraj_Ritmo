@@ -229,23 +229,116 @@ Generate a JSON playlist for "mellow indie folk from the 2010s for a rainy day" 
 **Explanation**  
 Chain-of-thought prompting breaks the task into logical steps, improving transparency and accuracy. The system prompt outlines three steps, and the RAG pipeline ensures metadata-driven song selection.
 
+
 ## Evaluation Pipeline
+
 The evaluation pipeline validates the quality of AI-generated playlists by comparing them to expected outputs. It uses a dataset of test cases, an LLM-based judge to score outputs, and a testing framework for automation. The pipeline is implemented as a Node.js script, integrating seamlessly with the MERN stack backend.
-Features
 
-Dataset: Includes 5+ test samples with user queries (e.g., "chill jazz for studying") and expected JSON playlists (with playlist_name, songs, description).
-Generation: Simulates the RAG pipeline by generating playlists via the OpenAI API (zero-shot, pending MongoDB integration).
-Judging: An LLM judge evaluates outputs on:
+### Features
+- **Dataset**: Includes 5+ test samples with user queries (e.g., "chill jazz for studying") and expected JSON playlists (with `playlist_name`, `songs`, `description`).
+- **Generation**: Simulates the RAG pipeline by generating playlists via the OpenAI API (zero-shot, pending MongoDB integration).
+- **Judging**: An LLM judge evaluates outputs on:
+  - **Format Adherence**: Valid JSON with required fields (`playlist_name`, `songs` as array of 5 objects each with `title`, `artist`, `genre`, `description`) (5/3/1).
+  - **Song Count**: Exactly 5 songs (5/1).
+  - **Relevance**: Matches query’s mood, genre, occasion (e.g., "chill" for jazz, "studying" for focus) (1-5).
+  - **Coherence**: Description aligns with playlist vibe and is engaging (1-5).
+  - **Overall Similarity**: Similarity to expected output in song choices, name, and description (1-5).
+- **Testing Framework**: Uses `jest` for automated testing, asserting average scores >= 3.5/5 across criteria. Includes a fallback for manual runs without Jest.
+- **Output**: JSON with scores (`format_score`, `song_count_score`, `relevance_score`, `coherence_score`, `overall_similarity_score`) and `comments` for each test case.
 
-Format Adherence: Valid JSON with required fields (5/3/1).
-Song Count: Exactly 5 songs (5/1).
-Relevance: Matches query’s mood, genre, occasion (1-5).
-Coherence: Description fits playlist vibe (1-5).
-Overall Similarity: Similarity to expected output (1-5).
+### Setup Instructions
+1. **Install Dependencies**:
+   ```bash
+   cd server
+   npm install openai jest --save-dev
+   ```
+2. **Configure Environment**:
+   - Update `server/.env` with:
+     ```env
+     OPENAI_API_KEY=your-openai-api-key
+     ```
+3. **Add Evaluation Script**:
+   - Place `evaluationPipeline.js` in `server/src/evaluation/`.
+   - Example script structure:
+     ```javascript
+     const { OpenAI } = require('openai');
+     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+     const DATASET = [
+       {
+         query: 'chill jazz for studying',
+         expected: {
+           playlist_name: 'Study Jazz Vibes',
+           songs: [
+             { title: 'Blue in Green', artist: 'Miles Davis', genre: 'Jazz' },
+             // ... 4 more songs
+           ],
+           description: 'A soothing jazz playlist to enhance focus during your study sessions.'
+         }
+       },
+       // ... 4 more samples
+     ];
 
-Testing Framework: Uses jest for automated testing, asserting average scores >= 3.5/5. Includes a fallback for manual runs.
-Output: JSON with scores and comments for each test case.
+     async function generatePlaylist(query) { /* Calls OpenAI API */ }
+     async function judgeOutput(query, expected, generated) { /* Evaluates output */ }
+     ```
+4. **Add Test File**:
+   - Create `server/src/evaluation/evaluationPipeline.test.js` for Jest tests.
+5. **Run the Pipeline**:
+   - Run tests:
+     ```bash
+     cd server
+     npm run test
+     ```
+   - For manual runs:
+     ```bash
+     node server/src/evaluation/evaluationPipeline.js
+     ```
+   - Add to `server/package.json`:
+     ```json
+     "scripts": {
+       "test": "jest",
+       "eval": "node src/evaluation/evaluationPipeline.js"
+     }
+     ```
+
+### Technical Details
+- **Files**: `server/src/evaluation/evaluationPipeline.js` (core logic) and `evaluationPipeline.test.js` (tests).
+- **Dataset**: 5 samples covering diverse queries (e.g., "upbeat pop for a road trip", "mellow indie folk from the 2010s for a rainy day"). Expected outputs use real songs sourced from platforms like Spotify and Reddit.
+- **Generation**: Uses OpenAI’s `gpt-4o-mini` with `temperature=0.8`, `top_p=0.9`, `max_tokens=500`. Future integration with MongoDB for RAG-based retrieval using `spotify-web-api-node`.
+- **Judging**: Separate LLM call with `temperature=0.2` for consistent scoring, evaluating 5 criteria via a structured prompt.
+- **Testing**: Jest runs tests asynchronously, with a 30s timeout for API calls. Manual loop for non-Jest execution.
+- **Error Handling**: Catches invalid JSON and provides detailed `comments` for debugging (e.g., "Generated playlist matches genre but has minor song differences").
+
+### Example Output
+For query "chill jazz for studying":
+```json
+{
+  "query": "chill jazz for studying",
+  "generated": {
+    "playlist_name": "Study Jazz Vibes",
+    "songs": [
+      {"title": "Blue in Green", "artist": "Miles Davis", "genre": "Jazz"},
+      // ... 4 more songs
+    ],
+    "description": "A soothing jazz playlist for focused studying."
+  },
+  "scores": {
+    "format_score": 5,
+    "song_count_score": 5,
+    "relevance_score": 4,
+    "coherence_score": 4,
+    "overall_similarity_score": 4,
+    "comments": "Generated playlist matches expected genre and mood, with minor song differences."
+  },
+  "average": 4.4
+}
+```
+
+### Notes
+- **Integration**: Expose as an Express route (e.g., `/api/evaluate`) or run standalone. Use `child_process` for scripted execution if needed.
+- **Future Work**: Integrate MongoDB for RAG-based generation, expand dataset, or explore open-source LLMs (e.g., Hugging Face models).
+- **Contributing**: Add test cases to `DATASET` in `evaluationPipeline.js` or refine judge criteria. Submit PRs with test results.
 
 ## Contributing
 - Fork the repository.
