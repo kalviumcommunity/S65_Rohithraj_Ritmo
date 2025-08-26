@@ -482,6 +482,72 @@ Token Usage for Judging (Query: "chill jazz for studying"): Prompt=450, Completi
 - **Contributing**: Enhance log format or add aggregation. Submit PRs with results.
 
 
+## Temperature Adjustment
+
+Adjusts the OpenAI API `temperature` in the evaluation pipeline for more focused playlist generation (from 0.8 to 0.7; judging at 0.2). Integrated with the MERN stack backend.
+
+### Features
+- **Temperature Update**: Sets `temperature=0.7` for generation, `0.2` for judging.
+- **Integration**: Updates `evaluationPipeline.js`.
+
+### Update Instructions
+1. **Modify Script**:
+   - In `server/src/evaluation/evaluationPipeline.js`, update:
+     ```javascript
+     async function generatePlaylist(query) {
+       const response = await openai.chat.completions.create({
+         model: 'gpt-4o-mini',
+         messages: [...],
+         temperature: 0.7, // Updated from 0.8
+         top_p: 0.9,
+         max_tokens: 500
+       });
+       await logTokens(response, 'Generation', query);
+       const text = response.choices[0].message.content.split('</playlist>')[0];
+       return JSON.parse(text);
+     }
+     ```
+2. **Test**:
+   ```bash
+   cd server
+   npm run test
+   ```
+
+### Technical Details
+- **File**: `server/src/evaluation/evaluationPipeline.js`.
+- **Temperature**: `0.7` for generation (more relevant outputs), `0.2` for judging.
+- **Testing**: Jest ensures average scores >= 3.5/5.
+
+### Example Output
+```
+Token Usage for Generation (Query: "chill jazz for studying"): Prompt=120, Completion=200, Total=320
+{
+  "query": "chill jazz for studying",
+  "generated": {
+    "playlist_name": "Study Jazz Vibes",
+    "songs": [
+      {"title": "Blue in Green", "artist": "Miles Davis", "genre": "Jazz"},
+      // ... 4 more
+    ],
+    "description": "A soothing jazz playlist for focused studying."
+  },
+  "scores": {
+    "format_score": 5,
+    "song_count_score": 5,
+    "relevance_score": 4,
+    "coherence_score": 4,
+    "overall_similarity_score": 4,
+    "comments": "Matches genre and mood, minor song differences."
+  },
+  "average": 4.4
+}
+```
+
+### Notes
+- **Purpose**: Enhances playlist relevance.
+- **Future Work**: Test other temperatures or add MongoDB RAG.
+- **Contributing**: Update test cases or temperature. Submit PRs with results.
+
 ## Contributing
 - Fork the repository.
 - Create feature branches (e.g., `feature/zero-shot`, `feature/rag-pipeline`).
