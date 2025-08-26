@@ -232,19 +232,111 @@ Chain-of-thought prompting breaks the task into logical steps, improving transpa
 
 ## Evaluation Pipeline
 
-The evaluation pipeline validates the quality of AI-generated playlists by comparing them to expected outputs. It uses a dataset of test cases, an LLM-based judge to score outputs, and a testing framework for automation. The pipeline is implemented as a Node.js script, integrating seamlessly with the MERN stack backend.
+The evaluation pipeline validates the quality of AI-generated playlists by comparing them to expected outputs, ensuring relevance and coherence. Implemented as a Node.js script, it integrates with the MERN stack backend, leveraging the OpenAI API for generation and judging, and Jest for automated testing. The pipeline processes a dataset of test cases, generates playlists, evaluates them using an LLM-based judge, and outputs detailed scores.
 
 ### Features
-- **Dataset**: Includes 5+ test samples with user queries (e.g., "chill jazz for studying") and expected JSON playlists (with `playlist_name`, `songs`, `description`).
-- **Generation**: Simulates the RAG pipeline by generating playlists via the OpenAI API (zero-shot, pending MongoDB integration).
+- **Dataset**: 5+ test samples with user queries (e.g., "chill jazz for studying") and expected JSON playlists (with `playlist_name`, `songs`, `description`).
+- **Generation**: Simulates the RAG pipeline using OpenAI’s API (zero-shot, pending MongoDB integration).
 - **Judging**: An LLM judge evaluates outputs on:
-  - **Format Adherence**: Valid JSON with required fields (`playlist_name`, `songs` as array of 5 objects each with `title`, `artist`, `genre`, `description`) (5/3/1).
+  - **Format Adherence**: Valid JSON with required fields (`playlist_name`, `songs` as array of 5 objects with `title`, `artist`, `genre`, `description`) (5/3/1).
   - **Song Count**: Exactly 5 songs (5/1).
   - **Relevance**: Matches query’s mood, genre, occasion (e.g., "chill" for jazz, "studying" for focus) (1-5).
   - **Coherence**: Description aligns with playlist vibe and is engaging (1-5).
   - **Overall Similarity**: Similarity to expected output in song choices, name, and description (1-5).
-- **Testing Framework**: Uses `jest` for automated testing, asserting average scores >= 3.5/5 across criteria. Includes a fallback for manual runs without Jest.
-- **Output**: JSON with scores (`format_score`, `song_count_score`, `relevance_score`, `coherence_score`, `overall_similarity_score`) and `comments` for each test case.
+- **Testing Framework**: Uses `jest` for automated testing, asserting average scores >= 3.5/5. Includes a manual run option.
+- **Output**: JSON with scores (`format_score`, `song_count_score`, `relevance_score`, `coherence_score`, `overall_similarity_score`) and `comments` for debugging.
+
+### Pipeline Setup and Execution
+The pipeline is set up as a Node.js module within the `server/` directory, organized for easy integration with the Express backend. Below is the detailed setup and execution flow:
+
+1. **File Structure**:
+   - `server/src/evaluation/evaluationPipeline.js`: Core logic with dataset, generation, and judging functions.
+   - `server/src/evaluation/evaluationPipeline.test.js`: Jest test suite for automated evaluation.
+   - Files are placed in a dedicated `evaluation/` directory to keep the backend organized.
+
+2. **Dependencies**:
+   - Requires `openai` for LLM calls and `jest` for testing.
+   - Install via:
+     ```bash
+     cd server
+     npm install openai jest --save-dev
+     ```
+
+3. **Environment Configuration**:
+   - Update `server/.env` to include:
+     ```env
+     OPENAI_API_KEY=your-openai-api-key
+     ```
+   - The script loads the API key using `process.env.OPENAI_API_KEY`.
+
+4. **Dataset**:
+   - Defined in `evaluationPipeline.js` as an array of objects, each containing a `query` and `expected` JSON playlist.
+   - Includes 5 diverse queries (e.g., "upbeat pop for a road trip", "mellow indie folk from the 2010s for a rainy day").
+   - Expected outputs use real songs sourced from platforms like Spotify and Reddit for authenticity.
+
+5. **Pipeline Components**:
+   - **Generation**: The `generatePlaylist` function sends queries to OpenAI’s `gpt-4o-mini` (parameters: `temperature=0.8`, `top_p=0.9`, `max_tokens=500`) using the system prompt from the project. It simulates RAG by relying on LLM knowledge (MongoDB integration pending).
+   - **Judging**: The `judgeOutput` function sends a structured prompt to the LLM, comparing generated and expected outputs across 5 criteria. Uses `temperature=0.2` for consistent scoring.
+   - **Testing**: The Jest test suite (`evaluationPipeline.test.js`) iterates over the dataset, calls `generatePlaylist` and `judgeOutput`, computes the average score, and asserts it meets the threshold (>= 3.5/5).
+
+6. **Execution Flow**:
+   - **Automated Testing**:
+     - Run `npm run test` to execute Jest tests.
+     - Each test case:
+       1. Generates a playlist for the query.
+       2. Judges it against the expected output.
+       3. Verifies the average score across criteria.
+     - Tests timeout after 30s to account for API latency.
+   - **Manual Execution**:
+     - Run `node server/src/evaluation/evaluationPipeline.js` for a non-test run.
+     - Outputs JSON results for all test cases, including generated playlists, scores, and comments.
+   - **Integration**: Optionally expose the pipeline via an Express route (e.g., `/api/evaluate`) to trigger evaluations from the frontend or CLI.
+
+7. **Script Example** (in `server/src/evaluation/evaluationPipeline.js`):
+   ```javascript
+   const { OpenAI } = require('openai');
+   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+   const SYSTEM_PROMPT = `...`; // From project
+   const JUDGE_PROMPT_TEMPLATE = `...`; // From project
+   const DATASET = [ /* 5 test cases */ ];
+
+   async function generatePlaylist(query) { /* Calls OpenAI API */ }
+   async function judgeOutput(query, expected, generated) { /* Evaluates output */ }
+
+   if (require.main === module) {
+     (async () => {
+       const results = [];
+       for (const sample of DATASET) {
+         const generated = await generatePlaylist(sample.query);
+         const scores = await judgeOutput(sample.query, sample.expected, generated);
+         const avg = Object.keys(scores).filter(k => k !== 'comments').reduce((sum, k) => sum + scores[k], 0) / 5;
+         results.push({ query: sample.query, generated, scores, average: avg });
+       }
+       console.log(JSON.stringify(results, null, 2));
+     })();
+   }
+
+   module.exports = { DATASET, generatePlaylist, judgeOutput };
+   ```
+
+8. **Test Suite Example** (in `server/src/evaluation/evaluationPipeline.test.js`):
+   ```javascript
+   const { DATASET, generatePlaylist, judgeOutput } = require('./evaluationPipeline');
+
+   describe('Playlist Evaluation', () => {
+     DATASET.forEach(sample => {
+       test(`Query: ${sample.query}`, async () => {
+         const generated = await generatePlaylist(sample.query);
+         expect(generated.error).toBeUndefined();
+         const scores = await judgeOutput(sample.query, sample.expected, generated);
+         expect(scores.error).toBeUndefined();
+         const avg = Object.keys(scores).filter(k => k !== 'comments').reduce((sum, k) => sum + scores[k], 0) / 5;
+         expect(avg).toBeGreaterThanOrEqual(3.5);
+       }, 30000);
+     });
+   });
+   ```
 
 ### Setup Instructions
 1. **Install Dependencies**:
@@ -253,62 +345,37 @@ The evaluation pipeline validates the quality of AI-generated playlists by compa
    npm install openai jest --save-dev
    ```
 2. **Configure Environment**:
-   - Update `server/.env` with:
+   - Update `server/.env`:
      ```env
      OPENAI_API_KEY=your-openai-api-key
      ```
-3. **Add Evaluation Script**:
-   - Place `evaluationPipeline.js` in `server/src/evaluation/`.
-   - Example script structure:
-     ```javascript
-     const { OpenAI } = require('openai');
-     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-     const DATASET = [
-       {
-         query: 'chill jazz for studying',
-         expected: {
-           playlist_name: 'Study Jazz Vibes',
-           songs: [
-             { title: 'Blue in Green', artist: 'Miles Davis', genre: 'Jazz' },
-             // ... 4 more songs
-           ],
-           description: 'A soothing jazz playlist to enhance focus during your study sessions.'
-         }
-       },
-       // ... 4 more samples
-     ];
-
-     async function generatePlaylist(query) { /* Calls OpenAI API */ }
-     async function judgeOutput(query, expected, generated) { /* Evaluates output */ }
-     ```
-4. **Add Test File**:
-   - Create `server/src/evaluation/evaluationPipeline.test.js` for Jest tests.
-5. **Run the Pipeline**:
-   - Run tests:
-     ```bash
-     cd server
-     npm run test
-     ```
-   - For manual runs:
-     ```bash
-     node server/src/evaluation/evaluationPipeline.js
-     ```
-   - Add to `server/package.json`:
+3. **Add Scripts**:
+   - Place `evaluationPipeline.js` and `evaluationPipeline.test.js` in `server/src/evaluation/`.
+   - Update `server/package.json`:
      ```json
      "scripts": {
        "test": "jest",
        "eval": "node src/evaluation/evaluationPipeline.js"
      }
      ```
+4. **Run the Pipeline**:
+   - Automated tests:
+     ```bash
+     cd server
+     npm run test
+     ```
+   - Manual run:
+     ```bash
+     npm run eval
+     ```
 
 ### Technical Details
-- **Files**: `server/src/evaluation/evaluationPipeline.js` (core logic) and `evaluationPipeline.test.js` (tests).
-- **Dataset**: 5 samples covering diverse queries (e.g., "upbeat pop for a road trip", "mellow indie folk from the 2010s for a rainy day"). Expected outputs use real songs sourced from platforms like Spotify and Reddit.
-- **Generation**: Uses OpenAI’s `gpt-4o-mini` with `temperature=0.8`, `top_p=0.9`, `max_tokens=500`. Future integration with MongoDB for RAG-based retrieval using `spotify-web-api-node`.
-- **Judging**: Separate LLM call with `temperature=0.2` for consistent scoring, evaluating 5 criteria via a structured prompt.
-- **Testing**: Jest runs tests asynchronously, with a 30s timeout for API calls. Manual loop for non-Jest execution.
-- **Error Handling**: Catches invalid JSON and provides detailed `comments` for debugging (e.g., "Generated playlist matches genre but has minor song differences").
+- **Files**: `server/src/evaluation/evaluationPipeline.js` (logic), `evaluationPipeline.test.js` (tests).
+- **Dataset**: 5 samples with queries and expected playlists, using real songs from web sources (e.g., Spotify, Reddit).
+- **Generation**: Uses `gpt-4o-mini` with `temperature=0.8`, `top_p=0.9`, `max_tokens=500`. Future MongoDB integration via `spotify-web-api-node`.
+- **Judging**: LLM call with `temperature=0.2` for consistent scoring across 5 criteria.
+- **Testing**: Jest for automation, with manual loop fallback.
+- **Error Handling**: Catches invalid JSON, provides detailed `comments` (e.g., "Matches genre but minor song differences").
 
 ### Example Output
 For query "chill jazz for studying":
@@ -336,9 +403,9 @@ For query "chill jazz for studying":
 ```
 
 ### Notes
-- **Integration**: Expose as an Express route (e.g., `/api/evaluate`) or run standalone. Use `child_process` for scripted execution if needed.
-- **Future Work**: Integrate MongoDB for RAG-based generation, expand dataset, or explore open-source LLMs (e.g., Hugging Face models).
-- **Contributing**: Add test cases to `DATASET` in `evaluationPipeline.js` or refine judge criteria. Submit PRs with test results.
+- **Integration**: Add an Express route (e.g., `/api/evaluate`) to trigger evaluations from the React frontend or CLI.
+- **Future Work**: Integrate MongoDB for RAG, expand dataset, or use open-source LLMs (e.g., Hugging Face).
+- **Contributing**: Add test cases to `DATASET` or refine judge criteria. Submit PRs with test results.
 
 ## Contributing
 - Fork the repository.
