@@ -229,6 +229,24 @@ Generate a JSON playlist for "mellow indie folk from the 2010s for a rainy day" 
 **Explanation**  
 Chain-of-thought prompting breaks the task into logical steps, improving transparency and accuracy. The system prompt outlines three steps, and the RAG pipeline ensures metadata-driven song selection.
 
+## Evaluation Pipeline
+The evaluation pipeline validates the quality of AI-generated playlists by comparing them to expected outputs. It uses a dataset of test cases, an LLM-based judge to score outputs, and a testing framework for automation. The pipeline is implemented as a Node.js script, integrating seamlessly with the MERN stack backend.
+Features
+
+Dataset: Includes 5+ test samples with user queries (e.g., "chill jazz for studying") and expected JSON playlists (with playlist_name, songs, description).
+Generation: Simulates the RAG pipeline by generating playlists via the OpenAI API (zero-shot, pending MongoDB integration).
+Judging: An LLM judge evaluates outputs on:
+
+Format Adherence: Valid JSON with required fields (5/3/1).
+Song Count: Exactly 5 songs (5/1).
+Relevance: Matches query’s mood, genre, occasion (1-5).
+Coherence: Description fits playlist vibe (1-5).
+Overall Similarity: Similarity to expected output (1-5).
+
+
+Testing Framework: Uses jest for automated testing, asserting average scores >= 3.5/5. Includes a fallback for manual runs.
+Output: JSON with scores and comments for each test case.
+
 ## Contributing
 - Fork the repository.
 - Create feature branches (e.g., `feature/zero-shot`, `feature/rag-pipeline`).
