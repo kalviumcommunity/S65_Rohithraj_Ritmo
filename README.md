@@ -407,6 +407,81 @@ For query "chill jazz for studying":
 - **Future Work**: Integrate MongoDB for RAG, expand dataset, or use open-source LLMs (e.g., Hugging Face).
 - **Contributing**: Add test cases to `DATASET` or refine judge criteria. Submit PRs with test results.
 
+
+## Token Usage Logging
+
+Logs token counts for OpenAI API calls in the evaluation pipeline to track usage and costs. Integrated into the MERN stack backend as a Node.js script.
+
+### Features
+- **Token Tracking**: Logs `prompt_tokens`, `completion_tokens`, and `total_tokens` for each generation and judging API call.
+- **Output**: Console logs with call type (Generation/Judging) and query.
+- **Integration**: Extends `evaluationPipeline.js` without new dependencies.
+
+### Setup Instructions
+1. **Verify Dependencies**:
+   - Ensure `openai` and `jest` are installed:
+     ```bash
+     cd server
+     npm install openai jest --save-dev
+     ```
+2. **Configure Environment**:
+   - Check `server/.env` has:
+     ```env
+     OPENAI_API_KEY=your-openai-api-key
+     ```
+3. **Update Script**:
+   - Add to `server/src/evaluation/evaluationPipeline.js`:
+     ```javascript
+     async function logTokens(response, callType, query) {
+       const { prompt_tokens, completion_tokens, total_tokens } = response.usage;
+       console.log(`Token Usage for ${callType} (Query: "${query}"): Prompt=${prompt_tokens}, Completion=${completion_tokens}, Total=${total_tokens}`);
+       return { prompt_tokens, completion_tokens, total_tokens };
+     }
+     ```
+   - Call `logTokens` in `generatePlaylist` and `judgeOutput` after API calls.
+4. **Run**:
+   - Automated tests: `npm run test`
+   - Manual: `npm run eval`
+
+### Technical Details
+- **File**: `server/src/evaluation/evaluationPipeline.js`.
+- **Logging**: Uses OpenAI’s `usage` field to log tokens after each API call.
+- **Execution**: Logs appear in console during Jest tests or manual runs.
+- **Error Handling**: Retains existing JSON error handling.
+
+### Example Output
+For query "chill jazz for studying":
+```
+Token Usage for Generation (Query: "chill jazz for studying"): Prompt=120, Completion=200, Total=320
+Token Usage for Judging (Query: "chill jazz for studying"): Prompt=450, Completion=150, Total=600
+{
+  "query": "chill jazz for studying",
+  "generated": {
+    "playlist_name": "Study Jazz Vibes",
+    "songs": [
+      {"title": "Blue in Green", "artist": "Miles Davis", "genre": "Jazz"},
+      // ... 4 more
+    ],
+    "description": "A soothing jazz playlist for focused studying."
+  },
+  "scores": {
+    "format_score": 5,
+    "song_count_score": 5,
+    "relevance_score": 4,
+    "coherence_score": 4,
+    "overall_similarity_score": 4,
+    "comments": "Matches genre and mood, minor song differences."
+  },
+  "average": 4.4
+}
+```
+
+### Notes
+- **Purpose**: Tracks API usage for cost optimization.
+- **Future Work**: Store logs in MongoDB or add to a dashboard.
+- **Contributing**: Enhance log format or add aggregation. Submit PRs with results.
+
+
 ## Contributing
 - Fork the repository.
 - Create feature branches (e.g., `feature/zero-shot`, `feature/rag-pipeline`).
